@@ -1,0 +1,48 @@
+name: "[prod] build bee-r.benso.ch and Deploy bee-r.benso.ch"
+on:
+  workflow_dispatch:
+    inputs:
+      branchname:
+        description: 'Which branch, tag or SHA should be deployed? (empty for default branch)'
+        required: false
+        default: ''
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Check-out Website
+        uses: actions/checkout@v3
+        with:
+          repository: BensoGmbH/bee-r_webpage
+          token: ${{ secrets.GH_SERVICE_ACCOUNT }}
+          ref: ${{ github.event.inputs.branchname }}  
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v2.1.5
+        with:
+          node-version: '16.x'
+      
+      - name: Install dependencies
+        run: npm install
+        
+      - name: Build tailwind
+        run: npx tailwind -i src/input.css -o dist/output.css
+        
+      - name: Build website
+        run: npm run build
+      
+      - name: Create CNAME File for GH Pages
+        run: mkdir -p public && echo "bee-r.benso.ch">./public/CNAME
+      
+      - name: Publish
+        uses: s0/git-publish-subdir-action@master
+        env:
+          REPO: self
+          BRANCH: deployment
+          FOLDER: dist
+          SQUASH_HISTORY: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
