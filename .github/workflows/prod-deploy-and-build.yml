@@ -36,7 +36,7 @@ jobs:
         run: npm run build
       
       - name: Create CNAME File for GH Pages
-        run: mkdir -p public && echo "bee-r.benso.ch">./public/CNAME
+        run: echo "bee-r.benso.ch">./dist/CNAME
       
       - name: Publish
         uses: s0/git-publish-subdir-action@master
